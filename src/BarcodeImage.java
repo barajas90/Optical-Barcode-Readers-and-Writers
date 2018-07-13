@@ -50,33 +50,43 @@ public class BarcodeImage implements Cloneable {
    public BarcodeImage(String[] str_data) {
       this();
 
-      // Start at the bottom left corner
-      int dy = str_data.length - 1;
-      for (int y = MAX_HEIGHT - 1; y >= 0; y--) {
-         // If there is no more data left, bail out.
-         if (dy < 0)
-            break;
+      // Ensure size is valid
+      if (! this.checkSize(str_data))
+         return;
 
-         // Get the row, each character is the value
-         String value = str_data[dy--];
-
-         // The string could be null, if it is this row
-         // has no data
-         if (value == null)
-            continue;
-
-         // Convert to char array
-         char[] row = value.toCharArray();
-         for (int x = 0; x < MAX_WIDTH; x++) {
-            // Ensure there is still data in the char array
-            if (x >= row.length)
-               break;
-
-            // If the char is a space or null there's no data here
-            setPixel(x, y, row[x] != ' ' && row[x] != 0);
+      int y = MAX_HEIGHT - 1;
+      for (int i = str_data.length - 1; i >= 0; i--) {
+         String chunk = str_data[i];
+         // For each character in the chunk
+         // if it is set, propagate that to the structure
+         for (int x = 0; x < chunk.length(); x++) {
+            this.setPixel(x, y,
+               chunk.charAt(x) != ' ' && chunk.charAt(x) != 0
+            );
          }
+
+         y--;
       }
    }
+
+   /**
+    * Ensures incoming string data is valid.
+    *
+    * @param data
+    * @return valid
+    */
+   private boolean checkSize(String[] data) {
+      if (data == null || data.length > MAX_HEIGHT)
+         return false;
+
+      for (String string : data) {
+         if (string == null || string.length() > MAX_WIDTH)
+            return false;
+      }
+
+      return true;
+   }
+
 
    /**
     * Gets the value for a pixel.
@@ -98,7 +108,7 @@ public class BarcodeImage implements Cloneable {
     * @return success
     */
    public boolean setPixel(int row, int col, boolean value) {
-      if (!isValidOffset(row, col))
+      if (! isValidOffset(row, col))
          return false;
 
       this.image_data[col][row] = value;
