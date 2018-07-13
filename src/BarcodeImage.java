@@ -23,6 +23,26 @@ public class BarcodeImage implements Cloneable {
    }
 
    /**
+    * Copy constructor.
+    *
+    * @param barcode
+    */
+   public BarcodeImage(BarcodeImage barcode) {
+      // Init the array
+      this();
+
+      for (int y = 0; y < MAX_HEIGHT; y++) {
+         for (int x = 0; x < MAX_WIDTH; x++) {
+            // Sets the current pixel with the pixel from
+            // the other barcode
+            this.setPixel(x, y,
+               barcode.getPixel(x, y)
+            );
+         }
+      }
+   }
+
+   /**
     * Constructor that converts 1D data into 2D.
     *
     * @param str_data
@@ -100,6 +120,16 @@ public class BarcodeImage implements Cloneable {
          }
          System.out.println();
       }
+   }
 
+   /**
+    * Deep clones the instance with a copy constructor.
+    *
+    * @return new BarcodeImage
+    * @throws CloneNotSupportedException
+    */
+   @Override
+   protected Object clone() throws CloneNotSupportedException {
+      return new BarcodeImage(this);
    }
 }
