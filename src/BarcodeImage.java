@@ -51,21 +51,29 @@ public class BarcodeImage implements Cloneable {
       this();
 
       // Start at the bottom left corner
-      int dx = 0;
+      int dy = str_data.length - 1;
       for (int y = MAX_HEIGHT - 1; y >= 0; y--) {
+         // If there is no more data left, bail out.
+         if (dy < 0)
+            break;
+
+         // Get the row, each character is the value
+         String value = str_data[dy--];
+
+         // The string could be null, if it is this row
+         // has no data
+         if (value == null)
+            continue;
+
+         // Convert to char array
+         char[] row = value.toCharArray();
          for (int x = 0; x < MAX_WIDTH; x++) {
-            // If dx is out of range in string skip
-            if (dx >= str_data.length)
+            // Ensure there is still data in the char array
+            if (x >= row.length)
                break;
 
-            // If the string have any value other than empty, space or null
-            // this "bit" is true
-            String value = str_data[dx++];
-            setPixel(x, y,
-               value != null
-                  && !value.equals("")
-                  && !value.equals(" ")
-            );
+            // If the char is a space or null there's no data here
+            setPixel(x, y, row[x] != ' ' && row[x] != 0);
          }
       }
    }
