@@ -1,3 +1,14 @@
+/**
+ * Data Matrix format implementation.
+ *
+ * Encodes and decodes DataMatrix formatted barcodes.
+ * Implements functionality from the BarcodeIO spec.
+ *
+ * @author Eric Ybarra
+ * @author Mercedes Garcia
+ * @author Thomas Krause
+ * @author William Barajas
+ */
 public class DataMatrix implements BarcodeIO {
    public static final char BLACK_CHAR = '*';
    public static final char WHITE_CHAR = ' ';
