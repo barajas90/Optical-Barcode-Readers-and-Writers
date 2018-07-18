@@ -6,8 +6,10 @@
  * In addition it provides an interface to support other barcode types.
  *
  *
- * @author Eric Ybarra, Mercedes Garcia
- * @author Thomas Krause, William Barajas
+ * @author Eric Ybarra
+ * @author Mercedes Garcia
+ * @author Thomas Krause
+ * @author William Barajas
  */
 public class Assig4 {
    public static void main(String[] args)

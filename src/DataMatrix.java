@@ -7,12 +7,31 @@ public class DataMatrix implements BarcodeIO {
    private int actualWidth = 0;
    private int actualHeight = 0;
 
+   /**
+    * Default constructor.
+    */
    public DataMatrix() {
       this.image = new BarcodeImage();
    }
 
+   /**
+    * Copy constructor, used for cloning.
+    *
+    * @param image
+    */
    public DataMatrix(BarcodeImage image) {
       this.scan(image);
+   }
+
+   /**
+    * Constructor to create barcode from text.
+    *
+    * @param text
+    */
+   public DataMatrix(String text) {
+      this();
+
+      this.readText(text);
    }
 
    //region Getters
@@ -63,16 +82,21 @@ public class DataMatrix implements BarcodeIO {
 
    //endregion
 
-   //region Setters
-
-   //endregion
-
+   /**
+    * Scans an image which loads and cleans it.
+    *
+    * @param bc barcode
+    * @return success
+    */
    @Override
    public boolean scan(BarcodeImage bc) {
       try {
+         // Make a copy of the memory
          this.image = (BarcodeImage) bc.clone();
+         // Move to bottom left corner of matrix
          this.cleanImage();
 
+         // Compute size
          this.actualHeight = this.computeSignalHeight();
          this.actualWidth = this.computeSignalWidth();
       } catch (CloneNotSupportedException e) {
@@ -82,6 +106,12 @@ public class DataMatrix implements BarcodeIO {
       return true;
    }
 
+   /**
+    * Loads text to encode to an image.
+    *
+    * @param text
+    * @return success
+    */
    @Override
    public boolean readText(String text) {
       if (text == null)
@@ -189,7 +219,10 @@ public class DataMatrix implements BarcodeIO {
 
       int value = 0;
       for (int offset = 0; offset < 8; offset++) {
+         // If this bit is set, calculate the value for the bit
          if (this.image.getPixel(col, height - offset)) {
+            // The offset is the binary position low to high
+            // 2^offset = binary value
             value += Math.pow(2, offset);
          }
       }
@@ -212,6 +245,7 @@ public class DataMatrix implements BarcodeIO {
       int height = BarcodeImage.MAX_HEIGHT - 2;
       int value = code;
 
+      // Convert decimal to binary
       for (int offset = 0; offset < 8; offset++) {
          this.image.setPixel(col, height - offset, value % 2 == 1);
          value /= 2;
@@ -275,6 +309,22 @@ public class DataMatrix implements BarcodeIO {
    }
 
    /**
+    * Helper method to print the horizontal bar
+    * to create a box around the content
+    */
+   private void printHorizontalBar(boolean full) {
+      int width = (
+         full ? BarcodeImage.MAX_WIDTH : getActualWidth()
+      ) + 2;
+
+      for (int x = 0; x < width; x++) {
+         System.out.print('-');
+      }
+
+      System.out.println();
+   }
+
+   /**
     * Displays the raw representation of the image in a box
     * for debugging
     */
@@ -293,22 +343,6 @@ public class DataMatrix implements BarcodeIO {
       }
 
       this.printHorizontalBar(true);
-   }
-
-   /**
-    * Helper method to print the horizontal bar
-    * to create a box around the content
-    */
-   public void printHorizontalBar(boolean full) {
-      int width = (
-         full ? BarcodeImage.MAX_WIDTH : getActualWidth()
-      ) + 2;
-
-      for (int x = 0; x < width; x++) {
-         System.out.print('-');
-      }
-
-      System.out.println();
    }
 
    //endregion

@@ -11,7 +11,7 @@ public class BarcodeImage implements Cloneable {
    public static final int MAX_HEIGHT = 30;
    public static final int MAX_WIDTH = 65;
 
-   private boolean[][] image_data;
+   private boolean[][] imageData;
 
    /**
     * Default constructor
@@ -19,7 +19,7 @@ public class BarcodeImage implements Cloneable {
    public BarcodeImage() {
       // This is all that is needed. Booleans are false
       // by default.
-      this.image_data = new boolean[MAX_HEIGHT][MAX_WIDTH];
+      this.imageData = new boolean[MAX_HEIGHT][MAX_WIDTH];
    }
 
    /**
@@ -70,25 +70,6 @@ public class BarcodeImage implements Cloneable {
    }
 
    /**
-    * Ensures incoming string data is valid.
-    *
-    * @param data
-    * @return valid
-    */
-   private boolean checkSize(String[] data) {
-      if (data == null || data.length > MAX_HEIGHT)
-         return false;
-
-      for (String string : data) {
-         if (string == null || string.length() > MAX_WIDTH)
-            return false;
-      }
-
-      return true;
-   }
-
-
-   /**
     * Gets the value for a pixel.
     *
     * @param row x
@@ -96,7 +77,7 @@ public class BarcodeImage implements Cloneable {
     * @return success|value
     */
    public boolean getPixel(int row, int col) {
-      return isValidOffset(row, col) && this.image_data[col][row];
+      return isValidOffset(row, col) && this.imageData[col][row];
    }
 
    /**
@@ -111,7 +92,25 @@ public class BarcodeImage implements Cloneable {
       if (! isValidOffset(row, col))
          return false;
 
-      this.image_data[col][row] = value;
+      this.imageData[col][row] = value;
+      return true;
+   }
+
+   /**
+    * Ensures incoming string data is valid.
+    *
+    * @param data
+    * @return valid
+    */
+   private boolean checkSize(String[] data) {
+      if (data == null || data.length > MAX_HEIGHT)
+         return false;
+
+      for (String string : data) {
+         if (string == null || string.length() > MAX_WIDTH)
+            return false;
+      }
+
       return true;
    }
 
@@ -131,13 +130,26 @@ public class BarcodeImage implements Cloneable {
     * Debugging until to display the contents of the matrix.
     */
    public void displayToConsole() {
+      System.out.println(this.toString());
+   }
+
+   /**
+    * Converts barcode image to string representation
+    *
+    * @return string
+    */
+   public String toString() {
+      String out = "";
+
       for (int y = 0; y < MAX_HEIGHT; y++) {
          for (int x = 0; x < MAX_WIDTH; x++) {
             int v = getPixel(x, y) ? 1 : 0;
-            System.out.print(v + " ");
+            out += v + " ";
          }
-         System.out.println();
+         out += "\n";
       }
+
+      return out;
    }
 
    /**
@@ -147,7 +159,7 @@ public class BarcodeImage implements Cloneable {
     * @throws CloneNotSupportedException
     */
    @Override
-   protected Object clone() throws CloneNotSupportedException {
+   public Object clone() throws CloneNotSupportedException {
       return new BarcodeImage(this);
    }
 }
