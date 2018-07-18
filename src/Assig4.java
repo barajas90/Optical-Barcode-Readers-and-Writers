@@ -1,25 +1,82 @@
+/**
+ * Optical Barcode Readers and Writers
+ * CST 338 - Assignment 4
+ *
+ * This program reads and writes data to a 2D barcode.
+ * In addition it provides an interface to support other barcode types.
+ *
+ *
+ * @author Eric Ybarra
+ * @author Mercedes Garcia
+ * @author Thomas Krause
+ * @author William Barajas
+ */
 public class Assig4 {
-   public static void main(String[] args) {
-      // Feel free to delete all this
-      // it was just to convince myself the
-      // copy constructor and BarcodeImage class worked
-      String[] s = {
-         "1", "2", "3", "4", " ", "5"
-      };
-      BarcodeImage bi = new BarcodeImage(s);
-      bi.displayToConsole();
-      System.out.println();
+   public static void main(String[] args)
+   {
+      String[] sImageIn =
+         {
+            "                                               ",
+            "                                               ",
+            "                                               ",
+            "     * * * * * * * * * * * * * * * * * * * * * ",
+            "     *                                       * ",
+            "     ****** **** ****** ******* ** *** *****   ",
+            "     *     *    ****************************** ",
+            "     * **    * *        **  *    * * *   *     ",
+            "     *   *    *  *****    *   * *   *  **  *** ",
+            "     *  **     * *** **   **  *    **  ***  *  ",
+            "     ***  * **   **  *   ****    *  *  ** * ** ",
+            "     *****  ***  *  * *   ** ** **  *   * *    ",
+            "     ***************************************** ",
+            "                                               ",
+            "                                               ",
+            "                                               "
 
-      BarcodeImage bi2 = null;
-      try {
-         bi2 = (BarcodeImage) bi.clone();
-         bi2.setPixel(0, 28, true);
-         bi2.displayToConsole();
-         System.out.println();
-      } catch (CloneNotSupportedException e) {
-         e.printStackTrace();
-      }
+         };
 
-      bi.displayToConsole();
+
+
+      String[] sImageIn_2 =
+         {
+            "                                          ",
+            "                                          ",
+            "* * * * * * * * * * * * * * * * * * *     ",
+            "*                                    *    ",
+            "**** *** **   ***** ****   *********      ",
+            "* ************ ************ **********    ",
+            "** *      *    *  * * *         * *       ",
+            "***   *  *           * **    *      **    ",
+            "* ** * *  *   * * * **  *   ***   ***     ",
+            "* *           **    *****  *   **   **    ",
+            "****  *  * *  * **  ** *   ** *  * *      ",
+            "**************************************    ",
+            "                                          ",
+            "                                          ",
+            "                                          ",
+            "                                          "
+
+         };
+
+      BarcodeImage bc = new BarcodeImage(sImageIn);
+      DataMatrix dm = new DataMatrix(bc);
+
+      // First secret message
+      dm.translateImageToText();
+      dm.displayTextToConsole();
+      dm.displayImageToConsole();
+
+      // second secret message
+      bc = new BarcodeImage(sImageIn_2);
+      dm.scan(bc);
+      dm.translateImageToText();
+      dm.displayTextToConsole();
+      dm.displayImageToConsole();
+
+      // create your own message
+      dm.readText("What a great resume builder this is!");
+      dm.generateImageFromText();
+      dm.displayTextToConsole();
+      dm.displayImageToConsole();
    }
 }

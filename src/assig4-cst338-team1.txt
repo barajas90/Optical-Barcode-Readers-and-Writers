@@ -1,0 +1,697 @@
+/**
+ * Optical Barcode Readers and Writers
+ * CST 338 - Assignment 4
+ *
+ * This program reads and writes data to a 2D barcode.
+ * In addition it provides an interface to support other barcode types.
+ *
+ *
+ * @author Eric Ybarra
+ * @author Mercedes Garcia
+ * @author Thomas Krause
+ * @author William Barajas
+ */
+public class Assig4 {
+   public static void main(String[] args)
+   {
+      String[] sImageIn =
+         {
+            "                                               ",
+            "                                               ",
+            "                                               ",
+            "     * * * * * * * * * * * * * * * * * * * * * ",
+            "     *                                       * ",
+            "     ****** **** ****** ******* ** *** *****   ",
+            "     *     *    ****************************** ",
+            "     * **    * *        **  *    * * *   *     ",
+            "     *   *    *  *****    *   * *   *  **  *** ",
+            "     *  **     * *** **   **  *    **  ***  *  ",
+            "     ***  * **   **  *   ****    *  *  ** * ** ",
+            "     *****  ***  *  * *   ** ** **  *   * *    ",
+            "     ***************************************** ",
+            "                                               ",
+            "                                               ",
+            "                                               "
+
+         };
+
+
+
+      String[] sImageIn_2 =
+         {
+            "                                          ",
+            "                                          ",
+            "* * * * * * * * * * * * * * * * * * *     ",
+            "*                                    *    ",
+            "**** *** **   ***** ****   *********      ",
+            "* ************ ************ **********    ",
+            "** *      *    *  * * *         * *       ",
+            "***   *  *           * **    *      **    ",
+            "* ** * *  *   * * * **  *   ***   ***     ",
+            "* *           **    *****  *   **   **    ",
+            "****  *  * *  * **  ** *   ** *  * *      ",
+            "**************************************    ",
+            "                                          ",
+            "                                          ",
+            "                                          ",
+            "                                          "
+
+         };
+
+      BarcodeImage bc = new BarcodeImage(sImageIn);
+      DataMatrix dm = new DataMatrix(bc);
+
+      // First secret message
+      dm.translateImageToText();
+      dm.displayTextToConsole();
+      dm.displayImageToConsole();
+
+      // second secret message
+      bc = new BarcodeImage(sImageIn_2);
+      dm.scan(bc);
+      dm.translateImageToText();
+      dm.displayTextToConsole();
+      dm.displayImageToConsole();
+
+      // create your own message
+      dm.readText("What a great resume builder this is!");
+      dm.generateImageFromText();
+      dm.displayTextToConsole();
+      dm.displayImageToConsole();
+   }
+}
+
+/**
+ * BarcodeIO Specification
+ *
+ * @author Mercedes Garcia, Thomas Krause
+ * @version 1.0
+ */
+interface BarcodeIO {
+   /**
+    * Scans a barcode.
+    *
+    * @param bc barcode
+    * @return success
+    */
+   public boolean scan(BarcodeImage bc);
+
+   /**
+    * Reads text.
+    *
+    * @param text
+    * @return success
+    */
+   public boolean readText(String text);
+
+   /**
+    * Generate a barcode from text.
+    *
+    * @return success
+    */
+   public boolean generateImageFromText();
+
+   /**
+    * Parses a barcode into text.
+    *
+    * @return success
+    */
+   public boolean translateImageToText();
+
+   /**
+    * Outputs the text to the console.
+    */
+   public void displayTextToConsole();
+
+   /**
+    * Outputs the image to the console.
+    */
+   public void displayImageToConsole();
+}
+
+/**
+ * Barcode Image
+ * CST 338 - Assignment 4
+ *
+ * Represents a 2D QR Code.
+ *
+ * @author Thomas Krause
+ * @version 1.0
+ */
+class BarcodeImage implements Cloneable {
+   public static final int MAX_HEIGHT = 30;
+   public static final int MAX_WIDTH = 65;
+
+   private boolean[][] imageData;
+
+   /**
+    * Default constructor
+    */
+   public BarcodeImage() {
+      // This is all that is needed. Booleans are false
+      // by default.
+      this.imageData = new boolean[MAX_HEIGHT][MAX_WIDTH];
+   }
+
+   /**
+    * Copy constructor.
+    *
+    * @param barcode
+    */
+   public BarcodeImage(BarcodeImage barcode) {
+      // Init the array
+      this();
+
+      for (int y = 0; y < MAX_HEIGHT; y++) {
+         for (int x = 0; x < MAX_WIDTH; x++) {
+            // Sets the current pixel with the pixel from
+            // the other barcode
+            this.setPixel(x, y,
+               barcode.getPixel(x, y)
+            );
+         }
+      }
+   }
+
+   /**
+    * Constructor that converts 1D data into 2D.
+    *
+    * @param str_data
+    */
+   public BarcodeImage(String[] str_data) {
+      this();
+
+      // Ensure size is valid
+      if (! this.checkSize(str_data))
+         return;
+
+      int y = MAX_HEIGHT - 1;
+      for (int i = str_data.length - 1; i >= 0; i--) {
+         String chunk = str_data[i];
+         // For each character in the chunk
+         // if it is set, propagate that to the structure
+         for (int x = 0; x < chunk.length(); x++) {
+            this.setPixel(x, y,
+               chunk.charAt(x) != ' ' && chunk.charAt(x) != 0
+            );
+         }
+
+         y--;
+      }
+   }
+
+   /**
+    * Gets the value for a pixel.
+    *
+    * @param row x
+    * @param col y
+    * @return success|value
+    */
+   public boolean getPixel(int row, int col) {
+      return isValidOffset(row, col) && this.imageData[col][row];
+   }
+
+   /**
+    * Sets a pixel to a value.
+    *
+    * @param row   x
+    * @param col   y
+    * @param value value
+    * @return success
+    */
+   public boolean setPixel(int row, int col, boolean value) {
+      if (! isValidOffset(row, col))
+         return false;
+
+      this.imageData[col][row] = value;
+      return true;
+   }
+
+   /**
+    * Ensures incoming string data is valid.
+    *
+    * @param data
+    * @return valid
+    */
+   private boolean checkSize(String[] data) {
+      if (data == null || data.length > MAX_HEIGHT)
+         return false;
+
+      for (String string : data) {
+         if (string == null || string.length() > MAX_WIDTH)
+            return false;
+      }
+
+      return true;
+   }
+
+   /**
+    * Is the location requested valid.
+    *
+    * @param row x
+    * @param col y
+    * @return success
+    */
+   private boolean isValidOffset(int row, int col) {
+      return col >= 0 && col < MAX_HEIGHT
+         && row >= 0 && row < MAX_WIDTH;
+   }
+
+   /**
+    * Debugging until to display the contents of the matrix.
+    */
+   public void displayToConsole() {
+      System.out.println(this.toString());
+   }
+
+   /**
+    * Converts barcode image to string representation
+    *
+    * @return string
+    */
+   public String toString() {
+      String out = "";
+
+      for (int y = 0; y < MAX_HEIGHT; y++) {
+         for (int x = 0; x < MAX_WIDTH; x++) {
+            int v = getPixel(x, y) ? 1 : 0;
+            out += v + " ";
+         }
+         out += "\n";
+      }
+
+      return out;
+   }
+
+   /**
+    * Deep clones the instance with a copy constructor.
+    *
+    * @return new BarcodeImage
+    * @throws CloneNotSupportedException
+    */
+   @Override
+   public Object clone() throws CloneNotSupportedException {
+      return new BarcodeImage(this);
+   }
+}
+
+
+/**
+ * Data Matrix format implementation.
+ *
+ * Encodes and decodes DataMatrix formatted barcodes.
+ * Implements functionality from the BarcodeIO spec.
+ *
+ * @author Eric Ybarra
+ * @author Mercedes Garcia
+ * @author Thomas Krause
+ * @author William Barajas
+ */
+class DataMatrix implements BarcodeIO {
+   public static final char BLACK_CHAR = '*';
+   public static final char WHITE_CHAR = ' ';
+
+   private BarcodeImage image;
+   private String text = "";
+   private int actualWidth = 0;
+   private int actualHeight = 0;
+
+   /**
+    * Default constructor.
+    */
+   public DataMatrix() {
+      this.image = new BarcodeImage();
+   }
+
+   /**
+    * Copy constructor, used for cloning.
+    *
+    * @param image
+    */
+   public DataMatrix(BarcodeImage image) {
+      this.scan(image);
+   }
+
+   /**
+    * Constructor to create barcode from text.
+    *
+    * @param text
+    */
+   public DataMatrix(String text) {
+      this();
+
+      this.readText(text);
+   }
+
+   //region Getters
+
+   /**
+    * Gets the width of the actual data.
+    *
+    * @return width
+    */
+   public int getActualWidth() {
+      return actualWidth;
+   }
+
+   /**
+    * Gets the height of the actual data.
+    *
+    * @return height
+    */
+   public int getActualHeight() {
+      return actualHeight;
+   }
+
+   private int computeSignalWidth() {
+      int width = 0;
+
+      while (this.image.getPixel(width, BarcodeImage.MAX_HEIGHT - 1)) {
+         width++;
+      }
+
+      return width;
+   }
+
+   /**
+    * Calculate how tall the signal section is.
+    *
+    * @return
+    */
+   private int computeSignalHeight() {
+      int offset = BarcodeImage.MAX_HEIGHT - 1;
+
+      while (this.image.getPixel(0, offset)) {
+         --offset;
+      }
+
+      // Compute actual height from the offset.
+      return BarcodeImage.MAX_HEIGHT - offset - 1;
+   }
+
+   //endregion
+
+   /**
+    * Scans an image which loads and cleans it.
+    *
+    * @param bc barcode
+    * @return success
+    */
+   @Override
+   public boolean scan(BarcodeImage bc) {
+      try {
+         // Make a copy of the memory
+         this.image = (BarcodeImage) bc.clone();
+         // Move to bottom left corner of matrix
+         this.cleanImage();
+
+         // Compute size
+         this.actualHeight = this.computeSignalHeight();
+         this.actualWidth = this.computeSignalWidth();
+      } catch (CloneNotSupportedException e) {
+         return false;
+      }
+
+      return true;
+   }
+
+   /**
+    * Loads text to encode to an image.
+    *
+    * @param text
+    * @return success
+    */
+   @Override
+   public boolean readText(String text) {
+      if (text == null)
+         return false;
+
+      this.text = text;
+
+      return true;
+   }
+
+   /**
+    * Writes some text to an image.
+    * Currently will support up to 63 characters of text.
+    *
+    * @return success
+    */
+   @Override
+   public boolean generateImageFromText() {
+      this.image = new BarcodeImage();
+
+      // Write left side border
+      int col = 0;
+      writeCharToCol(col++, 255);
+
+      for (char c : this.text.toCharArray()) {
+         writeCharToCol(col++, c);
+      }
+
+      // Write right side border
+      writeCharToCol(col, 170);
+
+      // Write bottom and top border
+      for (int x = 0; x <= col; x++) {
+         this.image.setPixel(x, BarcodeImage.MAX_HEIGHT - 1, true);
+         this.image.setPixel(x, BarcodeImage.MAX_HEIGHT - 10, x % 2 == 0);
+      }
+
+      this.actualHeight = computeSignalHeight();
+      this.actualWidth = computeSignalWidth();
+
+      return true;
+   }
+
+   /**
+    * Converts and image to it's text representation.
+    *
+    * @return text
+    */
+   @Override
+   public boolean translateImageToText() {
+      // Start at 1 to ignore the spine
+      this.text = "";
+      for (int x = 1; x < getActualWidth(); x++) {
+         char c = readCharFromCol(x);
+         // 170 is the delimiter on top and right
+         if (c == 170 || c == 0)
+            break;
+
+         this.text += readCharFromCol(x);
+      }
+
+      return true;
+   }
+
+   /**
+    * Display the text that was decoded.
+    */
+   @Override
+   public void displayTextToConsole() {
+      System.out.println(this.text);
+   }
+
+   /**
+    * Display the image in ASCII format.
+    */
+   @Override
+   public void displayImageToConsole() {
+      this.printHorizontalBar(false);
+
+      // Use the determined size to only display the content
+      for (int y = BarcodeImage.MAX_HEIGHT - getActualHeight();
+           y < BarcodeImage.MAX_HEIGHT; y++) {
+
+         System.out.print('|');
+         for (int x = 0; x < getActualWidth(); x++) {
+            System.out.print(
+               this.image.getPixel(x, y) ? BLACK_CHAR : WHITE_CHAR
+            );
+         }
+
+         System.out.println('|');
+      }
+   }
+
+   //region Helpers
+
+   /**
+    * Reads a character from a column.
+    *
+    * @param col column
+    * @return character
+    */
+   private char readCharFromCol(int col) {
+      int height = BarcodeImage.MAX_HEIGHT - 2;
+
+      int value = 0;
+      for (int offset = 0; offset < 8; offset++) {
+         // If this bit is set, calculate the value for the bit
+         if (this.image.getPixel(col, height - offset)) {
+            // The offset is the binary position low to high
+            // 2^offset = binary value
+            value += Math.pow(2, offset);
+         }
+      }
+
+      // Convert the value to ascii
+      return (char) value;
+   }
+
+   /**
+    * Helper to write data to a column.
+    *
+    * @param col column
+    * @param code code
+    * @return success
+    */
+   private boolean writeCharToCol(int col, int code) {
+      if (code > 255 || col == BarcodeImage.MAX_WIDTH)
+         return false;
+
+      int height = BarcodeImage.MAX_HEIGHT - 2;
+      int value = code;
+
+      // Convert decimal to binary
+      for (int offset = 0; offset < 8; offset++) {
+         this.image.setPixel(col, height - offset, value % 2 == 1);
+         value /= 2;
+      }
+
+      return true;
+   }
+
+   /**
+    * Shifts the image into the bottom left
+    */
+   private void cleanImage() {
+      // min x should have a high value here
+      // since we're trying to find min for x, and higher value for y
+      int mx = BarcodeImage.MAX_WIDTH, my = 0;
+
+      // Find the left and bottom most data
+      for (int y = BarcodeImage.MAX_HEIGHT - 1; y >= 0; y--) {
+         for (int x = 0; x < BarcodeImage.MAX_WIDTH; x++) {
+            // No data here, keep going until we find some
+            if (! this.image.getPixel(x, y))
+               continue;
+
+            // There was data found, is this the lowest value?
+            mx = Math.min(x, mx);
+            my = Math.max(y, my);
+         }
+      }
+
+      // Since we had to make a high offset, if it's out of
+      // bounds no shifting is needed for x
+      if (mx >= BarcodeImage.MAX_WIDTH)
+         mx = 0;
+
+      // Shift the image by our offsets
+      this.shiftImage(mx, BarcodeImage.MAX_HEIGHT - my - 1);
+   }
+
+   /**
+    * Shifts the image in a direction.
+    *
+    * Positive dx value will shift left, negative will shift right
+    * Positive dy value will shift down, negative will shift up
+    *
+    * @param dx distance x
+    * @param dy distance y
+    */
+   private void shiftImage(int dx, int dy) {
+      // They're just messing with us, no shifting required
+      if (dx == 0 && dy == 0)
+         return;
+
+      for (int y = BarcodeImage.MAX_HEIGHT - 1; y >= 0; y--) {
+         for (int x = 0; x < BarcodeImage.MAX_WIDTH; x++) {
+            this.image.setPixel(
+               x, y,
+               this.image.getPixel(x + dx, y - dy)
+            );
+         }
+      }
+   }
+
+   /**
+    * Helper method to print the horizontal bar
+    * to create a box around the content
+    */
+   private void printHorizontalBar(boolean full) {
+      int width = (
+         full ? BarcodeImage.MAX_WIDTH : getActualWidth()
+      ) + 2;
+
+      for (int x = 0; x < width; x++) {
+         System.out.print('-');
+      }
+
+      System.out.println();
+   }
+
+   /**
+    * Displays the raw representation of the image in a box
+    * for debugging
+    */
+   public void displayRawImage() {
+      this.printHorizontalBar(true);
+
+      for (int y = 0; y < BarcodeImage.MAX_HEIGHT; y++) {
+         System.out.print('|');
+         for (int x = 0; x < BarcodeImage.MAX_WIDTH; x++) {
+            System.out.print(
+               this.image.getPixel(x, y) ? BLACK_CHAR : WHITE_CHAR
+            );
+         }
+
+         System.out.println('|');
+      }
+
+      this.printHorizontalBar(true);
+   }
+
+   //endregion
+}
+
+/* ----- RUN ----- */
+
+CSUMB CSIT online program is top notch.
+-------------------------------------------
+|* * * * * * * * * * * * * * * * * * * * *|
+|*                                       *|
+|****** **** ****** ******* ** *** *****  |
+|*     *    ******************************|
+|* **    * *        **  *    * * *   *    |
+|*   *    *  *****    *   * *   *  **  ***|
+|*  **     * *** **   **  *    **  ***  * |
+|***  * **   **  *   ****    *  *  ** * **|
+|*****  ***  *  * *   ** ** **  *   * *   |
+|*****************************************|
+You did it!  Great work.  Celebrate.
+----------------------------------------
+|* * * * * * * * * * * * * * * * * * * |
+|*                                    *|
+|**** *** **   ***** ****   *********  |
+|* ************ ************ **********|
+|** *      *    *  * * *         * *   |
+|***   *  *           * **    *      **|
+|* ** * *  *   * * * **  *   ***   *** |
+|* *           **    *****  *   **   **|
+|****  *  * *  * **  ** *   ** *  * *  |
+|**************************************|
+What a great resume builder this is!
+----------------------------------------
+|* * * * * * * * * * * * * * * * * * * |
+|*                                    *|
+|***** * ***** ****** ******* **** **  |
+|* ************************************|
+|**  *    *  * * **    *    * *  *  *  |
+|* *               *    **     **  *  *|
+|**  *   * * *  * ***  * ***  *        |
+|**      **    * *    *     *    *  * *|
+|** *  * * **   *****  **  *    ** *** |
+|**************************************|
